@@ -1,39 +1,41 @@
-// Channel 1
-#define THROTTLE_SIGNAL_IN_A 0 // INTERRUPT 0 = DIGITAL PIN 2 - use the interrupt number in attachInterrupt
-#define THROTTLE_SIGNAL_IN_A_PIN 2 // INTERRUPT 0 = DIGITAL PIN 2 - use the PIN number in digitalRead
-#define NEUTRAL_THROTTLE_A 1556 // this is the duration in microseconds of neutral throttle on an electric RC Car
+// Advanced battle bot wheel control.
+// TODO: Add rotating in place
 
-// Channel 1
-volatile int nThrottleInA = NEUTRAL_THROTTLE_A; // volatile, we set this in the Interrupt and read it in loop so it must be declared volatile
-volatile unsigned long ulStartPeriodA = 0; // set in the interrupt
-volatile boolean bNewThrottleSignalA = false; // set in the interrupt and read in the loop
-// we could use nThrottleIn = 0 in loop instead of a separate variable, but using bNewThrottleSignal to indicate we have a new signal
-// is clearer for this first example
+// Debug serial output left on, since some tweaking may be needed for redeployment 
 
-// Channel 2
-#define THROTTLE_SIGNAL_IN_B 1 // INTERRUPT 1 = DIGITAL PIN 3 - use the interrupt number in attachInterrupt
-#define THROTTLE_SIGNAL_IN_B_PIN 3 // INTERRUPT 1 = DIGITAL PIN 3 - use the PIN number in digitalRead
-#define NEUTRAL_THROTTLE_B 1540 // This value may require changing the DX4e (Reading 1420 as nutral
+// Forward-Backward steering
+#define THROTTLE_SIGNAL_IN_A 0		// INTERRUPT 0 = DIGITAL PIN 2 - use the interrupt number in attachInterrupt
+#define THROTTLE_SIGNAL_IN_A_PIN 2	// INTERRUPT 0 = DIGITAL PIN 2 - use the PIN number in digitalRead
+#define NEUTRAL_THROTTLE_A 1556		// this is the duration in microseconds of neutral throttle on an electric RC Car
 
-// Channel 2
-volatile int nThrottleInB = NEUTRAL_THROTTLE_B; // volatile, we set this in the Interrupt and read it in loop so it must be declared volatile
-volatile unsigned long ulStartPeriodB = 0; // set in the interrupt
-volatile boolean bNewThrottleSignalB = false; // set in the interrupt and read in the loop
+volatile int nThrottleInA = NEUTRAL_THROTTLE_A;	// volatile, we set this in the Interrupt and read it in loop so it must be declared volatile
+volatile unsigned long ulStartPeriodA = 0;	// set in the interrupt
+volatile boolean bNewThrottleSignalA = false;	// set in the interrupt and read in the loop
+
+// Left-Right steering
+#define THROTTLE_SIGNAL_IN_B 1		// INTERRUPT 1 = DIGITAL PIN 3 - use the interrupt number in attachInterrupt
+#define THROTTLE_SIGNAL_IN_B_PIN 3 	// INTERRUPT 1 = DIGITAL PIN 3 - use the PIN number in digitalRead
+#define NEUTRAL_THROTTLE_B 1540 	// This value may require changing the DX4e (Reading 1420 as neutral
+
+volatile int nThrottleInB = NEUTRAL_THROTTLE_B;	// volatile, we set this in the Interrupt and read it in loop so it must be declared volatile
+volatile unsigned long ulStartPeriodB = 0;	// set in the interrupt
+volatile boolean bNewThrottleSignalB = false;	// set in the interrupt and read in the loop
 
 // Wheel variables
-int throttle;  //Fart i en retning
-const float baseSteerPercent = 0.5;
-float steerPercent; // 1 Goes right, 0 left
-const int maxForward = 1116; //Must be tweaked
-const int maxBack = 1792;    //Use control to test values
-const int maxLeft = 1048 ;   //and find values from the Serial Monitor
+int throttle;
+int engineSpeed;
+const float baseSteerPercent = 0.5;	// Go straight here
+float steerPercent; 			// 1 Goes right, 0 left
+const int maxForward = 1116; 		// Must be tweaked
+const int maxBack = 1792;    		// Use control to test values
+const int maxLeft = 1048 ;   		// and find values from the Serial Monitor
 const int maxRight = 2000;
 
-const int IN_1=5;  // HBridge IN_1
-const int IN_2=6;  // HBridge IN_2
-const int IN_3=7;  // HBridge IN_3
-const int IN_4=8;  // HBridge IN_4
-const int pinPWM_A=9;  // HBridge EN_A
+const int IN_1=5;  	// HBridge IN_1
+const int IN_2=6;  	// HBridge IN_2
+const int IN_3=7;  	// HBridge IN_3
+const int IN_4=8;  	// HBridge IN_4
+const int pinPWM_A=9; 	// HBridge EN_A
 const int pinPWM_B=10;  // HBrigde EN_B
 
 void setup() {
@@ -86,48 +88,34 @@ void loop () {
   }
 }
 void updateSpeeds() {
-  // Basic løsning, binære hastigheter
-  analogWrite(pinPWM_A,255);
-  analogWrite(pinPWM_B,255);
-  //Serial.println(throttle);
-  //Serial.println(nThrottleInB);
-  //Serial.println(steerPercent);
-  // Høyre:
-  if (steerPercent > 0.7) {
-    digitalWrite(IN_1,HIGH);
-    digitalWrite(IN_2,LOW);
-    digitalWrite(IN_3,LOW);
-    digitalWrite(IN_4,HIGH); 
-  }
-  // Venstre:
-  else if (steerPercent < 0.3) {
-    digitalWrite(IN_1,LOW);
-    digitalWrite(IN_2,HIGH);
-    digitalWrite(IN_3,HIGH);
-    digitalWrite(IN_4,LOW);     
-  }
-  // Fremover:
-  else if (throttle < NEUTRAL_THROTTLE_A) {
+  // Forward:
+  if (throttle < NEUTRAL_THROTTLE_A) {
     digitalWrite(IN_1,HIGH);
     digitalWrite(IN_2,LOW);
     digitalWrite(IN_3,HIGH);
     digitalWrite(IN_4,LOW); 
+    engineSpeed = 255*((NEUTRAL_THROTTLE_A-throttle)/(NEUTRAL_THROTTLE_A-maxForward));
   }
-  // Bakover
-  else if (throttle > NEUTRAL_THROTTLE_A) {
+  // Backward
+  else {
     digitalWrite(IN_1,LOW);
     digitalWrite(IN_2,HIGH);
     digitalWrite(IN_3,LOW);
     digitalWrite(IN_4,HIGH);
+    engineSpeed = 255*((NEUTRAL_THROTTLE_A-throttle)/(NEUTRAL_THROTTLE_A-maxBack));
   }
-  // Stå stille
+  // Right
+  if (steerPercent > 0.5) {
+    analogWrite(pinPWM_A, engineSpeed*(1-steerPercent));
+    analogWrite(pinPWM_B, engineSpeed);
+  }
+  // left
   else {
-    digitalWrite(IN_1,LOW);
-    digitalWrite(IN_2,LOW);
-    digitalWrite(IN_3,LOW);
-    digitalWrite(IN_4,LOW); 
+    analogWrite(pinPWM_A, engineSpeed);
+    analogWrite(pinPWM_B, engineSpeed*steerPercent);
   }
 }
+
 void calcInputA() {
   if(digitalRead(THROTTLE_SIGNAL_IN_A_PIN) == HIGH){
     ulStartPeriodA = micros();
