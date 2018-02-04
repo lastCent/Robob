@@ -2,14 +2,9 @@
 /*Activates a transistor driving a high-voltage step-up converter
 triggered by PWM-input signal from RC-reciever */
 
-/*TODO: 
- * check values from PWM-input 
- * activate transistor when RC-switch is HIGH
- * deactivate when RC-switch is LOW
-*/
-
-const int transistorPin = 5;    // connected to the base of the transistor
+const int transistorPin = 8;    // connected to the base of the transistor
 const byte PWM_PIN = 3;         // pwm input-pin
+const int pwm_threshold_top = 1600;
 
 int pwm_value;                  //value (time signal HIGH) in ms
 
@@ -21,17 +16,14 @@ void setup() {
  }
 
  void loop() {
-   
-   //Test transistor by turning off and on
-   /*
-   digitalWrite(transistorPin, HIGH);
-   delay(1000);
-   digitalWrite(transistorPin, LOW);
-   delay(1000);
-   */
-   
    pwm_value = pulseIn(PWM_PIN, HIGH);
-   Serial.println(pwm_value);
-   
-   
+      Serial.println("on");             // Debug
+   Serial.println(pwm_value);    // Debug
+   // Prototype toggle transist2or activation
+   if (pwm_value > pwm_threshold_top) {
+      digitalWrite(transistorPin, HIGH);
+   } else {
+      digitalWrite(transistorPin, LOW);
+   }
+   delay(50);
  }
