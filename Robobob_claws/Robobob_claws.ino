@@ -7,6 +7,7 @@ triggered by PWM-input signal from RC-reciever */
 // TODO: Safety exit if servo read pins not connected
 // TODO: Tweak servo position degrees
 // TODO: Check safety delay
+// TODO: Negative angle writing untested, replace with (180-x)?
 /*-----------------------------------------------------------------------------
 Config
 -----------------------------------------------------------------------------*/
@@ -69,7 +70,7 @@ int do_servos() {
         return 1;
     } else if (claws_closed && servo_PWM < toggle_threshold) {
         servo_l.write(servo_start_deg);
-        servo_r.write(servo_start_deg);
+        servo_r.write(-servo_start_deg);
         last_toggle = micros();
         claws_closed = false;
         Serial.println("Claws opened");         //DEBUG
