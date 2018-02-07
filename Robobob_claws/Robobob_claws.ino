@@ -60,7 +60,7 @@ bool safety_check() {
 // Open/close claws
 // Returns 1 if closed, -1 if opened, and 0 if no action taken
 int do_servos() {
-    int servo_PWM = pulseIn(shock_PWM_pin, HIGH);
+    int servo_PWM = pulseIn(servo_PWM_pin, HIGH);
     if (!claws_closed && servo_PWM > toggle_threshold) {
         servo_l.write(servo_close_deg);
 	servo_r.write(-servo_close_deg);
