@@ -7,7 +7,6 @@ triggered by PWM-input signal from RC-reciever */
 // TODO: Safety exit if servo read pins not connected
 // TODO: Tweak servo position degrees
 // TODO: Check safety delay
-// TODO: Negative angle writing untested, replace with (180-x)?
 // TODO: Make claws start as open
 
 /*-----------------------------------------------------------------------------
@@ -22,7 +21,7 @@ const int servo_ctrl_pin_r = 5;		// Right servo control
 const int servo_start_deg = 0;		// Claws neutral position
 const int servo_close_deg = 90;		// Claws closed position
 const int toggle_threshold = 1500;	// PWM threshold of toggling signal
-const int safety_delay = 1000;		// Delay before shock, in micros
+const int safety_delay = 1000;		// Delay before shock, in millis
 //-----------------------------------------------------------------------------
 
 int last_toggle;	// Last time the claws were toggled
@@ -49,8 +48,8 @@ void loop() {
 
 // Test that claws are closed before shock
 bool safety_check() {
-    int current_time = micros();
-    if (claws_closed && current_time - last_toggle > safety_delay) {
+    int current_time = millis();
+    if (claws_closed && (current_time - last_toggle) > safety_delay) {
         Serial.println("Safety check passed");      //DEBUG
         return true;
     } else {
@@ -67,14 +66,14 @@ int do_servos() {
     if (!claws_closed && servo_PWM > toggle_threshold) {
         servo_l.write(servo_close_deg);
 	      servo_r.write(servo_start_deg);
-        last_toggle = micros();
+        last_toggle = millis();
         claws_closed = true;   
         Serial.println("Claws closed");         //DEBUG
         return 1;
     } else if (claws_closed && servo_PWM < toggle_threshold) {
         servo_l.write(servo_start_deg);
         servo_r.write(servo_close_deg);
-        last_toggle = micros();
+        last_toggle = millis();
         claws_closed = false;
         Serial.println("Claws opened");         //DEBUG
         return -1;
