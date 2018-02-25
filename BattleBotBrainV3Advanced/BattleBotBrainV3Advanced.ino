@@ -1,6 +1,4 @@
 // Advanced battle bot wheel control.
-// TODO: Add rotating in place
-
 // Debug serial output left on, since some tweaking may be needed for redeployment 
 
 // Forward-Backward steering
@@ -90,29 +88,52 @@ void loop () {
 void updateSpeeds() {
   // Forward:
   if (throttle < NEUTRAL_THROTTLE_A) {
-    digitalWrite(IN_1,HIGH);
-    digitalWrite(IN_2,LOW);
-    digitalWrite(IN_3,HIGH);
-    digitalWrite(IN_4,LOW); 
+    digitalWrite(IN_1, HIGH);
+    digitalWrite(IN_2, LOW);
+    digitalWrite(IN_3, HIGH);
+    digitalWrite(IN_4, LOW); 
     engineSpeed = 255*((NEUTRAL_THROTTLE_A-throttle)/(NEUTRAL_THROTTLE_A-maxForward));
   }
   // Backward
   else {
-    digitalWrite(IN_1,LOW);
-    digitalWrite(IN_2,HIGH);
-    digitalWrite(IN_3,LOW);
-    digitalWrite(IN_4,HIGH);
+    digitalWrite(IN_1, LOW);
+    digitalWrite(IN_2, HIGH);
+    digitalWrite(IN_3, LOW);
+    digitalWrite(IN_4, HIGH);
     engineSpeed = 255*((NEUTRAL_THROTTLE_A-throttle)/(NEUTRAL_THROTTLE_A-maxBack));
   }
   // Right
   if (steerPercent > 0.5) {
-    analogWrite(pinPWM_A, engineSpeed*(1-steerPercent));
-    analogWrite(pinPWM_B, engineSpeed);
+    if (engineSpeed > 0) {
+      // Normal driving operation
+      analogWrite(pinPWM_A, engineSpeed*(1-steerPercent));
+      analogWrite(pinPWM_B, engineSpeed);
+    } else {
+      // Dirty turn while stationary overwrite
+      // TODO: May have to be inverted
+      digitalWrite(IN_1, HIGH);
+      digitalWrite(IN_2, HIGH);
+      digitalWrite(IN_3, HIGH);
+      digitalWrite(IN_4, HIGH);      
+      analogWrite(pinPWM_A, 255*(steerPercent-0.5)/0.5);
+      analogWrite(pinPWM_B, 255*(steerPercent-0.5)/0.5);
+    }
   }
   // left
   else {
-    analogWrite(pinPWM_A, engineSpeed);
-    analogWrite(pinPWM_B, engineSpeed*steerPercent);
+    if (engineSpeed > 0) {
+      // Normal driving operation
+      analogWrite(pinPWM_A, engineSpeed);
+      analogWrite(pinPWM_B, engineSpeed*steerPercent);
+    } else {
+      // Dirty turn while stationary overwrite
+      digitalWrite(IN_1, LOW);
+      digitalWrite(IN_2, LOW);
+      digitalWrite(IN_3, LOW);
+      digitalWrite(IN_4, LOW);      
+      analogWrite(pinPWM_A, 255*(steerPercent-0.5)/0.5);
+      analogWrite(pinPWM_B, 255*(steerPercent-0.5)/0.5);
+    } 
   }
 }
 
