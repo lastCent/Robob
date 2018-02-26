@@ -3,7 +3,7 @@
 
 // Forward-Backward steering
 #define THROTTLE_SIGNAL_IN_A 0		// INTERRUPT 0 = DIGITAL PIN 2 - use the interrupt number in attachInterrupt
-#define THROTTLE_SIGNAL_IN_A_PIN 11	// INTERRUPT 0 = DIGITAL PIN 11 - use the PIN number in digitalRead
+#define THROTTLE_SIGNAL_IN_A_PIN 2	// INTERRUPT 0 = DIGITAL PIN 11 - use the PIN number in digitalRead
 #define NEUTRAL_THROTTLE_A 1556		// this is the duration in microseconds of neutral throttle on an electric RC Car
 
 volatile int nThrottleInA = NEUTRAL_THROTTLE_A;	// volatile, we set this in the Interrupt and read it in loop so it must be declared volatile
