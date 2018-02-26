@@ -131,8 +131,8 @@ void updateSpeeds() {
       digitalWrite(IN_2, LOW);
       digitalWrite(IN_3, LOW);
       digitalWrite(IN_4, LOW);      
-      analogWrite(pinPWM_A, 255*(steerPercent-0.5)/0.5);
-      analogWrite(pinPWM_B, 255*(steerPercent-0.5)/0.5);
+      analogWrite(pinPWM_A, 255*(steerPercent)/0.5);
+      analogWrite(pinPWM_B, 255*(steerPercent)/0.5);
     } 
   }
 }
