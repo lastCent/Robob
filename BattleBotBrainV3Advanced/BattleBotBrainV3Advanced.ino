@@ -104,36 +104,15 @@ void updateSpeeds() {
   }
   // Right
   if (steerPercent > 0.5) {
-    if (engineSpeed > 0) {
-      // Normal driving operation
-      analogWrite(pinPWM_A, engineSpeed*(1-steerPercent));
-      analogWrite(pinPWM_B, engineSpeed);
-    } else {
-      // Dirty turn while stationary overwrite
-      // TODO: May have to be inverted
-      digitalWrite(IN_1, HIGH);
-      digitalWrite(IN_2, HIGH);
-      digitalWrite(IN_3, HIGH);
-      digitalWrite(IN_4, HIGH);      
-      analogWrite(pinPWM_A, 255*(steerPercent-0.5)/0.5);
-      analogWrite(pinPWM_B, 255*(steerPercent-0.5)/0.5);
-    }
+    // Normal driving operation
+    analogWrite(pinPWM_A, engineSpeed*(1-steerPercent));
+    analogWrite(pinPWM_B, engineSpeed);
   }
   // left
   else {
-    if (engineSpeed > 0) {
-      // Normal driving operation
-      analogWrite(pinPWM_A, engineSpeed);
-      analogWrite(pinPWM_B, engineSpeed*steerPercent);
-    } else {
-      // Dirty turn while stationary overwrite
-      digitalWrite(IN_1, LOW);
-      digitalWrite(IN_2, LOW);
-      digitalWrite(IN_3, LOW);
-      digitalWrite(IN_4, LOW);      
-      analogWrite(pinPWM_A, 255*(steerPercent)/0.5);
-      analogWrite(pinPWM_B, 255*(steerPercent)/0.5);
-    } 
+    // Normal driving operation
+    analogWrite(pinPWM_A, engineSpeed);
+    analogWrite(pinPWM_B, engineSpeed*steerPercent);
   }
 }
 
