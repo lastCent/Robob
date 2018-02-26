@@ -4,7 +4,7 @@
 // Forward-Backward steering
 #define THROTTLE_SIGNAL_IN_A 0		// INTERRUPT 0 = DIGITAL PIN 2 - use the interrupt number in attachInterrupt
 #define THROTTLE_SIGNAL_IN_A_PIN 2	// INTERRUPT 0 = DIGITAL PIN 11 - use the PIN number in digitalRead
-#define NEUTRAL_THROTTLE_A 1556		// this is the duration in microseconds of neutral throttle on an electric RC Car
+#define NEUTRAL_THROTTLE_A 1488		// this is the duration in microseconds of neutral throttle on an electric RC Car
 
 volatile int nThrottleInA = NEUTRAL_THROTTLE_A;	// volatile, we set this in the Interrupt and read it in loop so it must be declared volatile
 volatile unsigned long ulStartPeriodA = 0;	// set in the interrupt
@@ -13,7 +13,7 @@ volatile boolean bNewThrottleSignalA = false;	// set in the interrupt and read i
 // Left-Right steering
 #define THROTTLE_SIGNAL_IN_B 1		// INTERRUPT 1 = DIGITAL PIN 3 - use the interrupt number in attachInterrupt
 #define THROTTLE_SIGNAL_IN_B_PIN 3 	// INTERRUPT 1 = DIGITAL PIN 3 - use the PIN number in digitalRead
-#define NEUTRAL_THROTTLE_B 1540 	// This value may require changing the DX4e (Reading 1420 as neutral
+#define NEUTRAL_THROTTLE_B 1496 	// This value may require changing the DX4e (Reading 1420 as neutral
 
 volatile int nThrottleInB = NEUTRAL_THROTTLE_B;	// volatile, we set this in the Interrupt and read it in loop so it must be declared volatile
 volatile unsigned long ulStartPeriodB = 0;	// set in the interrupt
@@ -24,10 +24,10 @@ int throttle;
 int engineSpeed;
 const float baseSteerPercent = 0.5;	// Go straight here
 float steerPercent; 			// 1 Goes right, 0 left
-const int maxForward = 1116; 		// Must be tweaked
-const int maxBack = 1792;    		// Use control to test values
-const int maxLeft = 1048 ;   		// and find values from the Serial Monitor
-const int maxRight = 2000;
+const int maxForward = 1068; 		// Must be tweaked
+const int maxBack = 1908;    		// Use control to test values
+const int maxLeft = 1068 ;   		// and find values from the Serial Monitor
+const int maxRight = 1916;
 
 const int IN_1=5;  	// HBridge IN_1
 const int IN_2=6;  	// HBridge IN_2
