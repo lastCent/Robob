@@ -3,7 +3,6 @@
 
 // TODO: SEPARATE SHIT, MAKE CONFIG SECTION
 // UNFUCK VARIABLE NAMES
-// 4 space indent
 
 // Forward-Backward steering
 #define THROTTLE_SIGNAL_IN_A 0		// INTERRUPT 0 = DIGITAL PIN 2 - use the interrupt number in attachInterrupt
@@ -28,10 +27,10 @@ bool forward, backward, left, right;
 // Wheel variables
 float throttlePercent;
 float steerPercent;                     // How much left or right robot should go
-const int maxForward = 1116;            // Must be tweaked
-const int maxBack = 1792;               // Use control to test values
-const int maxLeft = 1048 ;              // and find values from the Serial Monitor
-const int maxRight = 2000;
+const int maxForward = 1064;            // Must be tweaked
+const int maxBack = 1908;               // Use control to test values
+const int maxLeft = 1068 ;              // and find values from the Serial Monitor
+const int maxRight = 1920;
 
 const int IN_1=5;  	// HBridge IN_1
 const int IN_2=6;  	// HBridge IN_2
@@ -61,6 +60,7 @@ void setup() {
     pinMode(pinPWM_B,OUTPUT);
     Serial.begin(9600);
     forward, backward, left, right = false;
+    Serial.println("Setup complete");
 }
 
 void loop () {
@@ -75,19 +75,23 @@ void loop () {
 
 void handleThrottle() {
     if (bNewThrottleSignalA) {
-        if (nThrottleInA > NEUTRAL_THROTTLE_A-100 && nThrottleInA < NEUTRAL_THROTTLE_A+100) {
+        // Check that no values are out of valid range
+        throttlePercent = min(throttlePercent, 1.0);
+        throttlePercent = max(throttlePercent, 0.0);
+        if (nThrottleInA > NEUTRAL_THROTTLE_A-150 && nThrottleInA < NEUTRAL_THROTTLE_A+150) {
             //NO FORWARD/BACKWARD
             throttlePercent = 0;
-            forward, backward = false;
+            forward = false;
+            backward = false;
         }
         else if (nThrottleInA < NEUTRAL_THROTTLE_A){
             // Going Forward
-            throttlePercent = ((NEUTRAL_THROTTLE_A-nThrottleInA)/(NEUTRAL_THROTTLE_A-maxForward));
+            throttlePercent = (float)(NEUTRAL_THROTTLE_A-nThrottleInA)/(NEUTRAL_THROTTLE_A-maxForward);
             forward = true; 
             backward = false;
         } else {
             // Going Backward
-            throttlePercent = ((NEUTRAL_THROTTLE_A-nThrottleInA)/(NEUTRAL_THROTTLE_A-maxBack));
+            throttlePercent = (float)(NEUTRAL_THROTTLE_A-nThrottleInA)/(NEUTRAL_THROTTLE_A-maxBack);
             backward = true;
             forward = false;
         }
@@ -96,103 +100,108 @@ void handleThrottle() {
 }
 
 void handleTurn() {
-  if (bNewThrottleSignalB) {
-    if (nThrottleInB > NEUTRAL_THROTTLE_B-100 && nThrottleInB < NEUTRAL_THROTTLE_B+100) {
-      // NO LEFT OR RIGHT
-      steerPercent = 0;
-      left, right = false;
-    } else if (nThrottleInB < NEUTRAL_THROTTLE_B) {
-      // Going left 
-      steerPercent = (float)(NEUTRAL_THROTTLE_B-nThrottleInB)/(NEUTRAL_THROTTLE_B-maxLeft);
-      left = true;
-      right = false;
-    } else {
-      //Going Right 
-      steerPercent =(float)(NEUTRAL_THROTTLE_B-nThrottleInB)/(NEUTRAL_THROTTLE_B-maxRight) ; 
-      right = true;
-      left = false; 
-    }
-    bNewThrottleSignalB = false;
-  }    
+    if (bNewThrottleSignalB) {
+            // Check that no values are out of valid range
+            steerPercent = min(steerPercent, 1.0);
+            steerPercent= max(steerPercent, 0.0);
+        if (nThrottleInB > NEUTRAL_THROTTLE_B-100 && nThrottleInB < NEUTRAL_THROTTLE_B+100) {
+            // NO LEFT OR RIGHT
+            steerPercent = 0;
+            left = false;
+            right = false;
+        } else if (nThrottleInB < NEUTRAL_THROTTLE_B) {
+            // Going left 
+            steerPercent = (float)(NEUTRAL_THROTTLE_B-nThrottleInB)/(NEUTRAL_THROTTLE_B-maxLeft);
+            left = true;
+            right = false;
+        } else {
+            //Going Right 
+            steerPercent =(float)(NEUTRAL_THROTTLE_B-nThrottleInB)/(NEUTRAL_THROTTLE_B-maxRight) ; 
+            right = true;
+            left = false; 
+            }
+        bNewThrottleSignalB = false;
+      }    
 }
     
 void updateSpeeds() {
-  // Stand in place (and turn)
-  if (!(forward || backward)) {
-    // Do nothing
-    if (!(left || right)) {
-      setHBridge(LOW, LOW, LOW, LOW, 0, 0);
+    // Stand in place (and turn)
+    if (!(forward || backward)) {
+        // Do nothing
+        if (!(left || right)) {
+            setHBridge(LOW, LOW, LOW, LOW, 0, 0);
+        }
+        // Turn right
+        else if (right) {
+            setHBridge(HIGH, LOW, LOW, HIGH, 255*steerPercent, 255*steerPercent);
+        }
+        // Turn left
+        else if (left){
+            setHBridge(LOW, HIGH, HIGH, LOW,255*steerPercent, 255*steerPercent);  
+        }
     }
-    // Turn right
-    else if (right) {
-      setHBridge(LOW, LOW, LOW, LOW, 255*steerPercent, 255*steerPercent);
+    // Move forward
+    else if (forward) {
+        // Straight
+        if (!(left || right)) {
+            setHBridge(HIGH, LOW, HIGH, LOW, 255*throttlePercent,255*throttlePercent);
+            Serial.println(255*throttlePercent);
+        }
+        // Right
+        else if (right) {
+            setHBridge(HIGH, LOW, HIGH, LOW, 255*throttlePercent, 255*throttlePercent*(1-steerPercent));
+        } 
+        // Left
+        else if (left) {
+            setHBridge(HIGH, LOW, HIGH, LOW, 255*throttlePercent*(1-steerPercent), 255*throttlePercent);  
+        }
     }
-    // Turn left
-    else if (left){
-      setHBridge(HIGH, HIGH, HIGH, HIGH,255*steerPercent, 255*steerPercent);  
+    // Move backward
+    else {
+        // Straight
+        if (!(left || right)) {
+            Serial.println(255*throttlePercent);
+            setHBridge(LOW, HIGH, LOW, HIGH, 255*throttlePercent, 255*throttlePercent);
+        }
+        // Right
+        else if (right) {
+            setHBridge(LOW, HIGH, LOW, HIGH, 255*throttlePercent, 255*throttlePercent*(1-steerPercent));
+        }
+        // Left
+        else if (left) {
+            setHBridge(LOW, HIGH, LOW, HIGH, 255*throttlePercent*(1-steerPercent), 255*throttlePercent);  
+        }
     }
-  }
-  // Move forward
-  else if (forward) {
-    // Straight
-    if (!(left || right)) {
-        setHBridge(HIGH, LOW, HIGH, LOW, 255*throttlePercent,255*throttlePercent);
-    }
-    // Right
-    else if (right) {
-      setHBridge(HIGH, LOW, HIGH, LOW, 255*throttlePercent, 255*throttlePercent*(1-steerPercent));
-    } 
-    // Left
-    else if (left) {
-      setHBridge(HIGH, LOW, HIGH, LOW, 255*throttlePercent*(1-steerPercent), 255*throttlePercent);  
-    }
-  }
-  // Move backward
-  else {
-    // Straight
-    if (!(left || right)) {
-        setHBridge(LOW, HIGH, LOW, HIGH, 255*throttlePercent, 255*throttlePercent);
-    }
-    // Right
-    else if (right) {
-        setHBridge(LOW, HIGH, LOW, HIGH, 255*throttlePercent, 255*throttlePercent*(1-steerPercent));
-    }
-    // Left
-    else if (left) {
-        setHBridge(LOW, HIGH, LOW, HIGH, 255*throttlePercent*(1-steerPercent), 255*throttlePercent);  
-    }
-  }
 }
 
 void calcInputA() {
-  if(digitalRead(THROTTLE_SIGNAL_IN_A_PIN) == HIGH){
-    ulStartPeriodA = micros();
-  }
-  else {
-    if(ulStartPeriodA && (bNewThrottleSignalA == false)){
-      nThrottleInA = (int)(micros() - ulStartPeriodA);
-      ulStartPeriodA = 0;
-      bNewThrottleSignalA = true;
-      Serial.print("A:");
-      Serial.println(nThrottleInA);
+    if(digitalRead(THROTTLE_SIGNAL_IN_A_PIN) == HIGH){
+        ulStartPeriodA = micros();
     }
-  }
+    else {
+        if(ulStartPeriodA && (bNewThrottleSignalA == false)){
+            nThrottleInA = (int)(micros() - ulStartPeriodA);
+            ulStartPeriodA = 0;
+            bNewThrottleSignalA = true;
+            Serial.print("A:");
+            Serial.println(nThrottleInA);
+        }
+    }
 }
 
 void calcInputB() {
-  if(digitalRead(THROTTLE_SIGNAL_IN_B_PIN) == HIGH){
-    ulStartPeriodB = micros();
-  }
-  else {
-    if(ulStartPeriodB && (bNewThrottleSignalB == false)){
-      nThrottleInB = (int)(micros() - ulStartPeriodB);
-      ulStartPeriodB = 0;
-      bNewThrottleSignalB = true;
-      Serial.print("B:");
-      Serial.println(nThrottleInB);
-      
+    if(digitalRead(THROTTLE_SIGNAL_IN_B_PIN) == HIGH){
+        ulStartPeriodB = micros();
     }
-  }
+    else {
+        if(ulStartPeriodB && (bNewThrottleSignalB == false)){
+             nThrottleInB = (int)(micros() - ulStartPeriodB);
+            ulStartPeriodB = 0;
+            bNewThrottleSignalB = true;
+            Serial.print("B:");
+            Serial.println(nThrottleInB);
+        }
+    }
 }
 
 void setHBridge(uint8_t one, uint8_t two, uint8_t three, uint8_t four, uint8_t A, uint8_t B) {

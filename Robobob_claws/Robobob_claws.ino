@@ -39,22 +39,16 @@ void setup() {
     servo_l.attach(servo_ctrl_pin_l);
     servo_r.attach(servo_ctrl_pin_r);
     // Dab sequence
-    servo_l.write(servo_l_open); 
-    servo_r.write(servo_r_closed);
-    delay(1000);
-    servo_l.write(servo_l_closed);
-    servo_r.write(servo_r_open);
-    delay(1000);
-    servo_l.write(servo_l_open);
-    servo_r.write(servo_r_open);
-    Serial.begin(115200);
-    Serial.println("Setup Complete");       //DEBUG
+    do_dab();
+    Serial.begin(9600);
+    Serial.println("Setup Complete");
 }
 
 void loop() {
-    do_servos();
-    do_shock();
-    delay(50);      //TODO: Adjust?
+    do_servos();        // Grab with servos
+    do_dab();               // Taunt the enemy
+    //do_shock();       // Donate energy
+    delay(30);      //TODO: Adjust?
 }
 
 // Test that claws are closed before shock
@@ -71,22 +65,24 @@ bool safety_check() {
 
 // Open/close claws
 // Returns 1 if closed, -1 if opened, and 0 if no action taken
+// Commented lines need to be reactivated for safety functionality
 int do_servos() {
     int servo_PWM = pulseIn(servo_PWM_pin, HIGH);
-    //Serial.println(servo_PWM);             //DEBUG
-    if (!claws_closed && servo_PWM > toggle_threshold) {
+    //if (!claws_closed && servo_PWM > toggle_threshold) {
+    if (servo_PWM > toggle_threshold) {
         servo_l.write(servo_l_closed);
         servo_r.write(servo_r_closed);   
-        last_toggle = millis();
+        //last_toggle = millis();
         claws_closed = true;   
-        Serial.println("Claws closed");         //DEBUG
+        //Serial.println("Claws closed");
         return 1;
-    } else if (claws_closed && servo_PWM < toggle_threshold) {
+    //} else if (claws_closed && servo_PWM < toggle_threshold) {
+    } else if (servo_PWM < toggle_threshold) {
         servo_l.write(servo_l_open);
         servo_r.write(servo_r_open);
-        last_toggle = millis();
+        //last_toggle = millis();
         claws_closed = false;
-        Serial.println("Claws opened");         //DEBUG
+        //Serial.println("Claws opened");
         return -1;
     } else {
         return 0;
@@ -96,18 +92,35 @@ int do_servos() {
 // Activate shock if safety measures met
 bool do_shock() {
     int shock_PWM = pulseIn(shock_PWM_pin, HIGH);
-    //Serial.println(shock_PWM);
     if (!safety_check()) {
         digitalWrite(transistor_pin, LOW);
         return false;
     }
     if (shock_PWM > toggle_threshold) {
         digitalWrite(transistor_pin, HIGH);
-        Serial.println("Shock delivered");          //DEBUG
+        Serial.println("Shock delivered");
         return true;
     } else {
         digitalWrite(transistor_pin, LOW);
-        Serial.println("Shock disabled");           //DEBUG
+        Serial.println("Shock disabled");
         return false;
     }
 }
+
+// Unholyness
+bool do_dab() {
+    int shock_PWM = pulseIn(shock_PWM_pin, HIGH);
+    if (shock_PWM > toggle_threshold) {
+        servo_l.write(servo_l_open); 
+        servo_r.write(servo_r_closed);
+        delay(750);
+        servo_l.write(servo_l_closed);
+        servo_r.write(servo_r_open);
+        delay(750);
+        servo_l.write(servo_l_open);
+        servo_r.write(servo_r_open);  
+        return true;
+    }
+    return false;
+}
+
