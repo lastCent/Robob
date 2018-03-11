@@ -16,10 +16,12 @@ Config
 const int transistor_pin = 12;    	// Shock weapon transistor gate
 const int shock_PWM_pin = 9;         	// Shock PWM input-pin
 const int servo_PWM_pin = 10; 		// Servo PWM input-pin
-const int servo_ctrl_pin_l = 3;		// Left servo control
-const int servo_ctrl_pin_r = 5;		// Right servo control
-const int servo_start_deg = 0;		// Claws neutral position
-const int servo_close_deg = 90;		// Claws closed position
+const int servo_ctrl_pin_l = 5;		// Left servo control
+const int servo_ctrl_pin_r = 3;		// Right servo control
+const int servo_l_open = 80;
+const int servo_l_closed = 5;
+const int servo_r_open = 0;
+const int servo_r_closed = 82;
 const int toggle_threshold = 1500;	// PWM threshold of toggling signal
 const int safety_delay = 1000;		// Delay before shock, in millis
 //-----------------------------------------------------------------------------
@@ -36,14 +38,17 @@ void setup() {
     pinMode(servo_PWM_pin, INPUT);
     servo_l.attach(servo_ctrl_pin_l);
     servo_r.attach(servo_ctrl_pin_r);
-    Serial.begin(115200);
-    Serial.println("Setup Complete");       //DEBUG
+    // Dab sequence
+    do_dab();
+    Serial.begin(9600);
+    Serial.println("Setup Complete");
 }
 
 void loop() {
-    do_servos();
-    do_shock();
-    delay(50);      //TODO: Adjust?
+    do_servos();        // Grab with servos
+    do_dab();               // Taunt the enemy
+    //do_shock();       // Donate energy
+    delay(30);      //TODO: Adjust?
 }
 
 // Test that claws are closed before shock
@@ -60,22 +65,24 @@ bool safety_check() {
 
 // Open/close claws
 // Returns 1 if closed, -1 if opened, and 0 if no action taken
+// Commented lines need to be reactivated for safety functionality
 int do_servos() {
     int servo_PWM = pulseIn(servo_PWM_pin, HIGH);
-    //Serial.println(servo_PWM);             //DEBUG
-    if (!claws_closed && servo_PWM > toggle_threshold) {
-        servo_l.write(servo_close_deg);
-	      servo_r.write(servo_start_deg);
-        last_toggle = millis();
+    //if (!claws_closed && servo_PWM > toggle_threshold) {
+    if (servo_PWM > toggle_threshold) {
+        servo_l.write(servo_l_closed);
+        servo_r.write(servo_r_closed);   
+        //last_toggle = millis();
         claws_closed = true;   
-        Serial.println("Claws closed");         //DEBUG
+        //Serial.println("Claws closed");
         return 1;
-    } else if (claws_closed && servo_PWM < toggle_threshold) {
-        servo_l.write(servo_start_deg);
-        servo_r.write(servo_close_deg);
-        last_toggle = millis();
+    //} else if (claws_closed && servo_PWM < toggle_threshold) {
+    } else if (servo_PWM < toggle_threshold) {
+        servo_l.write(servo_l_open);
+        servo_r.write(servo_r_open);
+        //last_toggle = millis();
         claws_closed = false;
-        Serial.println("Claws opened");         //DEBUG
+        //Serial.println("Claws opened");
         return -1;
     } else {
         return 0;
@@ -85,18 +92,35 @@ int do_servos() {
 // Activate shock if safety measures met
 bool do_shock() {
     int shock_PWM = pulseIn(shock_PWM_pin, HIGH);
-    //Serial.println(shock_PWM);
     if (!safety_check()) {
         digitalWrite(transistor_pin, LOW);
         return false;
     }
     if (shock_PWM > toggle_threshold) {
         digitalWrite(transistor_pin, HIGH);
-        Serial.println("Shock delivered");          //DEBUG
+        Serial.println("Shock delivered");
         return true;
     } else {
         digitalWrite(transistor_pin, LOW);
-        Serial.println("Shock disabled");           //DEBUG
+        Serial.println("Shock disabled");
         return false;
     }
 }
+
+// Unholyness
+bool do_dab() {
+    int shock_PWM = pulseIn(shock_PWM_pin, HIGH);
+    if (shock_PWM > toggle_threshold) {
+        servo_l.write(servo_l_open); 
+        servo_r.write(servo_r_closed);
+        delay(750);
+        servo_l.write(servo_l_closed);
+        servo_r.write(servo_r_open);
+        delay(750);
+        servo_l.write(servo_l_open);
+        servo_r.write(servo_r_open);  
+        return true;
+    }
+    return false;
+}
+
