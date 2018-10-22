@@ -33,21 +33,21 @@ Config
 // Shock weaponry
 #define RELAY_PIN 4
 #define SHOCK_PWM 5
-#define SHOCK_THRESHOLD 1500
+#define SHOCK_THRESHOLD 1750
 
 // Forward-Backward steering
 #define THROTTLE_SIGNAL_IN_A 1               // INTERRUPT 0 = DIGITAL PIN 2 - use the interrupt number in attachInterrupt
 #define THROTTLE_SIGNAL_IN_A_PIN 2      // INTERRUPT 0 = DIGITAL PIN 11 - use the PIN number in digitalRead
 #define NEUTRAL_THROTTLE_A 1488             // this is the duration in microseconds of neutral throttle on an electric RC Car
-#define maxForward 1064
-#define maxBack 1908 
+#define maxForward 1144
+#define maxBack 1820 
 
 // Left-Right steering
 #define THROTTLE_SIGNAL_IN_B 0                // INTERRUPT 1 = DIGITAL PIN 3 - use the interrupt number in attachInterrupt
 #define THROTTLE_SIGNAL_IN_B_PIN 3      // INTERRUPT 1 = DIGITAL PIN 3 - use the PIN number in digitalRead
 #define NEUTRAL_THROTTLE_B 1496             // This value may require changing the DX4e (Reading 1420 as neutral
-#define maxLeft 1068
-#define maxRight 1920
+#define maxLeft 868
+#define maxRight 1760
 
 // HBridge
 #define pinPWM_A 9
