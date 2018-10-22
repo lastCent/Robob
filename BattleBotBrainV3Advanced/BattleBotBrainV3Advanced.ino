@@ -27,10 +27,10 @@ bool forward, backward, left, right;
 // Wheel variables
 float throttlePercent;
 float steerPercent;                     // How much left or right robot should go
-const int maxForward = 1064;            // Must be tweaked
-const int maxBack = 1908;               // Use control to test values
-const int maxLeft = 1068 ;              // and find values from the Serial Monitor
-const int maxRight = 1920;
+const int maxForward = 1230;            // Must be tweaked
+const int maxBack = 1750;               // Use control to test values
+const int maxLeft = 1068;              // and find values from the Serial Monitor
+const int maxRight = 1930;
 
 const int IN_1=5;  	// HBridge IN_1
 const int IN_2=6;  	// HBridge IN_2
@@ -133,10 +133,12 @@ void updateSpeeds() {
         }
         // Turn right
         else if (right) {
+            Serial.println("Turning right!");
             setHBridge(HIGH, LOW, LOW, HIGH, 255*steerPercent, 255*steerPercent);
         }
         // Turn left
         else if (left){
+            Serial.println("Turning left!");
             setHBridge(LOW, HIGH, HIGH, LOW,255*steerPercent, 255*steerPercent);  
         }
     }
@@ -145,7 +147,7 @@ void updateSpeeds() {
         // Straight
         if (!(left || right)) {
             setHBridge(HIGH, LOW, HIGH, LOW, 255*throttlePercent,255*throttlePercent);
-            Serial.println(255*throttlePercent);
+            //Serial.println(255*throttlePercent);
         }
         // Right
         else if (right) {
@@ -160,7 +162,7 @@ void updateSpeeds() {
     else {
         // Straight
         if (!(left || right)) {
-            Serial.println(255*throttlePercent);
+            //Serial.println(255*throttlePercent);
             setHBridge(LOW, HIGH, LOW, HIGH, 255*throttlePercent, 255*throttlePercent);
         }
         // Right
@@ -198,8 +200,8 @@ void calcInputB() {
              nThrottleInB = (int)(micros() - ulStartPeriodB);
             ulStartPeriodB = 0;
             bNewThrottleSignalB = true;
-            Serial.print("B:");
-            Serial.println(nThrottleInB);
+            //Serial.print("B:");
+            //Serial.println(nThrottleInB);
         }
     }
 }
@@ -212,5 +214,3 @@ void setHBridge(uint8_t one, uint8_t two, uint8_t three, uint8_t four, uint8_t A
     analogWrite(pinPWM_A, A);
     analogWrite(pinPWM_B, B);
 }
-
-
