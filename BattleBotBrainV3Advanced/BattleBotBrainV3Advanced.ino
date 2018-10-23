@@ -1,43 +1,77 @@
-// Advanced battle bot wheel control.
-// Debug serial output left on, since some tweaking may be needed for redeployment 
+/*------------------------------------------------------------------------------
+Description
+------------------------------------------------------------------------------*/
 
-// TODO: SEPARATE SHIT, MAKE CONFIG SECTION
-// UNFUCK VARIABLE NAMES
+/*
+ * Advanced battle bot control system.
+ * Features turn-while-moving as well as turn-in-place.
+ * Interrupt based pwm control.
+ */
+
+/*
+ * Hardware requirements: 
+ * Arduino Nano (change pins for other layouts)
+ * 	- Must have 2+ interrupt pins
+ */
+
+/* TODO list:
+ * Convert to Pro Micro
+ * Merge claw code
+ */ 
+
+/*------------------------------------------------------------------------------
+Config 
+------------------------------------------------------------------------------*/ 
+
+// Serial debug
+#define debug_baud 115200
+
+// Claw weaponry
+
 
 // Forward-Backward steering
-#define THROTTLE_SIGNAL_IN_A 0		// INTERRUPT 0 = DIGITAL PIN 2 - use the interrupt number in attachInterrupt
-#define THROTTLE_SIGNAL_IN_A_PIN 2	// INTERRUPT 0 = DIGITAL PIN 11 - use the PIN number in digitalRead
-#define NEUTRAL_THROTTLE_A 1488		// this is the duration in microseconds of neutral throttle on an electric RC Car
+#define THROTTLE_SIGNAL_IN_A 0      // INTERRUPT 0 = DIGITAL PIN 2 - use the interrupt number in attachInterrupt
+#define THROTTLE_SIGNAL_IN_A_PIN 2  // INTERRUPT 0 = DIGITAL PIN 11 - use the PIN number in digitalRead
+#define NEUTRAL_THROTTLE_A 1488     // this is the duration in microseconds of neutral throttle on an electric RC Car
+#define maxForward 1230
+#define maxBack 1750  
 
+// Left-Right steering
+#define THROTTLE_SIGNAL_IN_B 1      // INTERRUPT 1 = DIGITAL PIN 3 - use the interrupt number in attachInterrupt
+#define THROTTLE_SIGNAL_IN_B_PIN 3  // INTERRUPT 1 = DIGITAL PIN 3 - use the PIN number in digitalRead
+#define NEUTRAL_THROTTLE_B 1496     // This value may require changing the DX4e (Reading 1420 as neutral
+#define maxLeft 1068 
+#define maxRight 1930
+
+// HBridge
+#define pinPWM_A 9 	// HBridge EN_A 
+#define pinPWM_B 10     // HBrigde EN_B 
+#define IN_1 5  	// HBridge IN_1
+#define IN_2 6  	// HBridge IN_2
+#define IN_3 7  	// HBridge IN_3
+#define IN_4 8  	// HBridge IN_4
+
+/*------------------------------------------------------------------------------
+Definitions
+------------------------------------------------------------------------------*/
+
+// Forward-Backward steering
 volatile int nThrottleInA = NEUTRAL_THROTTLE_A;	// volatile, we set this in the Interrupt and read it in loop so it must be declared volatile
 volatile unsigned long ulStartPeriodA = 0;	// set in the interrupt
 volatile boolean bNewThrottleSignalA = false;	// set in the interrupt and read in the loop
 
 // Left-Right steering
-#define THROTTLE_SIGNAL_IN_B 1		// INTERRUPT 1 = DIGITAL PIN 3 - use the interrupt number in attachInterrupt
-#define THROTTLE_SIGNAL_IN_B_PIN 3 	// INTERRUPT 1 = DIGITAL PIN 3 - use the PIN number in digitalRead
-#define NEUTRAL_THROTTLE_B 1496 	// This value may require changing the DX4e (Reading 1420 as neutral
-
 volatile int nThrottleInB = NEUTRAL_THROTTLE_B;	// volatile, we set this in the Interrupt and read it in loop so it must be declared volatile
 volatile unsigned long ulStartPeriodB = 0;	// set in the interrupt
 volatile boolean bNewThrottleSignalB = false;	// set in the interrupt and read in the loop
 
 // Flags
 bool forward, backward, left, right; 
+
 // Wheel variables
 float throttlePercent;
 float steerPercent;                     // How much left or right robot should go
-const int maxForward = 1230;            // Must be tweaked
-const int maxBack = 1750;               // Use control to test values
-const int maxLeft = 1068;              // and find values from the Serial Monitor
-const int maxRight = 1930;
 
-const int IN_1=5;  	// HBridge IN_1
-const int IN_2=6;  	// HBridge IN_2
-const int IN_3=7;  	// HBridge IN_3
-const int IN_4=8;  	// HBridge IN_4
-const int pinPWM_A=9; 	// HBridge EN_A  (venstre?)
-const int pinPWM_B=10;  // HBrigde EN_B (høyre?)
 
 void setup() {
     // tell the Arduino we want the function calcInput to be called whenever INT0 (digital pin 2)
@@ -52,25 +86,25 @@ void setup() {
     // catching these changes will allow us to calculate how long the input pulse is
     attachInterrupt(digitalPinToInterrupt(THROTTLE_SIGNAL_IN_B_PIN),calcInputB,CHANGE);
     
+    // Steering
     pinMode(IN_1,OUTPUT);
     pinMode(IN_2,OUTPUT);
     pinMode(IN_3,OUTPUT);
     pinMode(IN_4,OUTPUT);
     pinMode(pinPWM_A,OUTPUT);
     pinMode(pinPWM_B,OUTPUT);
-    Serial.begin(9600);
     forward, backward, left, right = false;
+
+    // Debug
+    Serial.begin(debug_baud);
     Serial.println("Setup complete");
 }
 
 void loop () {
-    delay(50); // For testing
-    //Handle new speed value
-    handleThrottle();
-    //Handle new turn value
-    handleTurn();
-    // Write new values to engines
-    updateSpeeds();
+    delay(50); 
+    handleThrottle();  // Handle new speed value
+    handleTurn();      // Handle new turn value
+    updateSpeeds();    // Write new values to engines
 }
 
 void handleThrottle() {
