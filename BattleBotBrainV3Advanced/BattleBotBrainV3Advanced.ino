@@ -52,6 +52,33 @@ Config
 #define IN_4 8  	// HBridge IN_4
 
 /*------------------------------------------------------------------------------
+Schematics
+------------------------------------------------------------------------------*/
+
+/*
+                                         Claw side motors connect to 
+                                         middle HBridge
+       ______________________            
+    || |Servo         Servo | ||
+    ||C|                    |3||         HBridge fronts defined as side 
+    || |                    | ||         with heatsink (HH)
+       |        ____        |
+       |    red |HH| red    |           <- Middle HBridge, HBridge1
+       |  white |__| white  |
+       |                    |            Red cables -> Backwards movement
+       |                    |            White cables -> Forward movement
+       |        ____        |
+    || |  white |  | red    | ||
+    ||C|    red |HH| white  |3||        <- Outer HBridge, HBridge2
+    || |        ----        | || 
+       ----------------------            Motors are connected to their
+                                         closest HBridge connector 
+
+                                         Note cable inversion on bottom left
+*/
+
+
+/*------------------------------------------------------------------------------
 Definitions
 ------------------------------------------------------------------------------*/
 
