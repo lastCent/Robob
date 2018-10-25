@@ -30,7 +30,7 @@ Config
 #include <Servo.h>
 
 // Serial debug
-#define debug_baud 115200
+#define debug_baud 9600
 
 // Shock weaponry
 #define RELAY_PIN 4
@@ -40,7 +40,7 @@ Config
 // Forward-Backward steering
 #define THROTTLE_SIGNAL_IN_A 1               // INTERRUPT 0 = DIGITAL PIN 2 - use the interrupt number in attachInterrupt
 #define THROTTLE_SIGNAL_IN_A_PIN 2      // INTERRUPT 0 = DIGITAL PIN 11 - use the PIN number in digitalRead
-#define NEUTRAL_THROTTLE_A 1488             // this is the duration in microseconds of neutral throttle on an electric RC Car
+#define NEUTRAL_THROTTLE_A 1460             // this is the duration in microseconds of neutral throttle on an electric RC Car
 #define maxForward 1144
 #define maxBack 1820 
 #define DEADZONE_A 150
@@ -48,7 +48,7 @@ Config
 // Left-Right steering
 #define THROTTLE_SIGNAL_IN_B 0                // INTERRUPT 1 = DIGITAL PIN 3 - use the interrupt number in attachInterrupt
 #define THROTTLE_SIGNAL_IN_B_PIN 3      // INTERRUPT 1 = DIGITAL PIN 3 - use the PIN number in digitalRead
-#define NEUTRAL_THROTTLE_B 1300             // This value may require changing the DX4e (Reading 1420 as neutral
+#define NEUTRAL_THROTTLE_B 1212             // This value may require changing the DX4e (Reading 1420 as neutral
 #define maxLeft 868
 #define maxRight 1760
 #define DEADZONE_B 100
@@ -58,7 +58,7 @@ Config
 #define pinPWM_B 10
 #define LEFT_FORWARD 0
 #define LEFT_BACK 180
-#define STOP 90
+#define STOP 93
 #define RIGHT_FORWARD 180
 #define RIGHT_BACK 0
  
@@ -112,8 +112,14 @@ void setup() {
 }
 
 void loop() {
-    updateSpeeds();       // Write new values to engines
-    operateShock();       // Use the weapon
+    if (bNewThrottleSignalA) {
+        updateSpeeds();       // Write new values to engines
+        bNewThrottleSignalA = false;
+    }
+    if (bNewThrottleSignalB) {
+        operateShock();       // Use the weapon
+        bNewThrottleSignalB = false;
+    }
 
     delay(50);  
 }
@@ -141,6 +147,7 @@ void updateSpeeds() {
                 max(STOP, map(nThrottleInA, NEUTRAL_THROTTLE_A, maxForward, STOP, RIGHT_FORWARD) -
                 map(nThrottleInB, NEUTRAL_THROTTLE_B, maxRight, RIGHT_BACK, STOP))
             );
+            Serial.println("Forward Right");
                 
         }
         // Turn left
@@ -150,6 +157,7 @@ void updateSpeeds() {
                 map(nThrottleInB, NEUTRAL_THROTTLE_B, maxLeft, LEFT_FORWARD, STOP)), 
                 map(nThrottleInA, NEUTRAL_THROTTLE_A, maxForward, STOP, RIGHT_FORWARD)
             ); 
+            Serial.println("Forward Left");
         }
         // Move straight
         else {
@@ -157,6 +165,7 @@ void updateSpeeds() {
                 map(nThrottleInA, NEUTRAL_THROTTLE_A, maxForward, STOP, LEFT_FORWARD),
                 map(nThrottleInA, NEUTRAL_THROTTLE_A, maxForward, STOP, RIGHT_FORWARD)
             );
+            Serial.println("Forward Straight");
         }
     }
     // Move backward
@@ -168,6 +177,7 @@ void updateSpeeds() {
                 min(STOP, map(nThrottleInA, NEUTRAL_THROTTLE_A, maxBack, STOP, RIGHT_BACK) +
                 map(nThrottleInB, NEUTRAL_THROTTLE_B, maxRight, RIGHT_BACK, STOP))
             );
+            Serial.println("Backward Right");
         }
         // Turn left
         else if (nThrottleInB < NEUTRAL_THROTTLE_B - DEADZONE_B){ 
@@ -176,6 +186,7 @@ void updateSpeeds() {
                 map(nThrottleInB, NEUTRAL_THROTTLE_B, maxLeft, LEFT_FORWARD, STOP)),
                 map(nThrottleInA, NEUTRAL_THROTTLE_A, maxBack, STOP, RIGHT_BACK)
             );
+            Serial.println("Backward Left");
         }
         // Move straight
         else {
@@ -183,6 +194,7 @@ void updateSpeeds() {
                 map(nThrottleInA, NEUTRAL_THROTTLE_A, maxBack, STOP, LEFT_BACK),
                 map(nThrottleInA, NEUTRAL_THROTTLE_A, maxBack, STOP, RIGHT_BACK)
             );
+            Serial.println("Backward Straight");
         }
     }
     // Stand in place (and turn)
@@ -193,6 +205,7 @@ void updateSpeeds() {
                 map(nThrottleInB, NEUTRAL_THROTTLE_B, maxRight, STOP, LEFT_FORWARD),
                 map(nThrottleInB, NEUTRAL_THROTTLE_B, maxRight, STOP, RIGHT_BACK)
             );
+            Serial.println("Inplace Right");
         }
         // Turn left
         else if (nThrottleInB < NEUTRAL_THROTTLE_B - DEADZONE_B){ 
@@ -200,10 +213,13 @@ void updateSpeeds() {
                 map(nThrottleInB, NEUTRAL_THROTTLE_B, maxLeft, STOP, LEFT_BACK),
                 map(nThrottleInB, NEUTRAL_THROTTLE_B, maxLeft, STOP, RIGHT_FORWARD)
             );
+            Serial.println("Inplace Left");
         }
         // Do nothing
         else {
-            set_servos(STOP,STOP);
+            left.writeMicroseconds(1495);
+            right.writeMicroseconds(1575);
+            Serial.println("Idle");
         }
     }
 }
