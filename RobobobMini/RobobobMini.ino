@@ -43,7 +43,7 @@ Config
 #define NEUTRAL_THROTTLE_A 1460             // this is the duration in microseconds of neutral throttle on an electric RC Car
 #define maxForward 1144
 #define maxBack 1820 
-#define DEADZONE_A 150
+#define DEADZONE_A 200
 
 // Left-Right steering
 #define THROTTLE_SIGNAL_IN_B 0                // INTERRUPT 1 = DIGITAL PIN 3 - use the interrupt number in attachInterrupt
@@ -51,7 +51,7 @@ Config
 #define NEUTRAL_THROTTLE_B 1212             // This value may require changing the DX4e (Reading 1420 as neutral
 #define maxLeft 868
 #define maxRight 1760
-#define DEADZONE_B 100
+#define DEADZONE_B 200
 
 // Servos
 #define pinPWM_A 9
@@ -217,8 +217,8 @@ void updateSpeeds() {
         }
         // Do nothing
         else {
-            left.writeMicroseconds(1495);
-            right.writeMicroseconds(1575);
+            left.writeMicroseconds(1532);
+            right.writeMicroseconds(1530);
             Serial.println("Idle");
         }
     }
