@@ -11,7 +11,7 @@ Description
 /*
  * Hardware requirements: 
  * Arduino Nano (change pins for other layouts)
- * 	- Must have 2+ interrupt pins
+ *   - Must have 2+ interrupt pins
  */
 
 /* TODO list:
@@ -44,12 +44,12 @@ Config
 #define maxRight 1930
 
 // HBridge
-#define pinPWM_A 9 	// HBridge EN_A 
+#define pinPWM_A 9  // HBridge EN_A 
 #define pinPWM_B 10     // HBrigde EN_B 
-#define IN_1 5  	// HBridge IN_1
-#define IN_2 6  	// HBridge IN_2
-#define IN_3 7  	// HBridge IN_3
-#define IN_4 8  	// HBridge IN_4
+#define IN_1 5    // HBridge IN_1
+#define IN_2 6    // HBridge IN_2
+#define IN_3 7    // HBridge IN_3
+#define IN_4 8    // HBridge IN_4
 
 /*------------------------------------------------------------------------------
 Schematics
@@ -58,22 +58,21 @@ Schematics
 /*
                                          Claw side motors connect to 
                                          middle HBridge
-       ______________________            
-    || |Servo         Servo | ||
-    ||C|                    |3||         HBridge fronts defined as side 
-    || |                    | ||         with heatsink (HH)
-       |        ____        |
-       |    red |HH| red    |           <- Middle HBridge, HBridge1
-       |  white |__| white  |
-       |                    |            Red cables -> Backwards movement
-       |                    |            White cables -> Forward movement
-       |        ____        |
-    || |  white |  | red    | ||
-    ||C|    red |HH| white  |3||        <- Outer HBridge, HBridge2
-    || |        ----        | || 
-       ----------------------            Motors are connected to their
+       ________________________            
+    || |Servo           Servo | ||
+    ||C|1                    2|3||         HBridge fronts defined as side 
+    || |                      | ||         with heatsink (HH)
+       |        ____          |
+       |  2 red |HH| red 1    |           <- Middle HBridge, HBridge1
+       |  white |__| white    |
+       |                      |            Red cables -> Backwards movement
+       |                      |            White cables -> Forward movement
+       |        ____          |
+    || |  white |  | red 3    | ||
+    ||C|4 4 red |HH| white   3|3||        <- Outer HBridge, HBridge2
+    || |        ----          | || 
+       ------------------------            Motors are connected to their
                                          closest HBridge connector 
-
                                          Note cable inversion on bottom left
 */
 
@@ -83,14 +82,14 @@ Definitions
 ------------------------------------------------------------------------------*/
 
 // Forward-Backward steering
-volatile int nThrottleInA = NEUTRAL_THROTTLE_A;	// volatile, we set this in the Interrupt and read it in loop so it must be declared volatile
-volatile unsigned long ulStartPeriodA = 0;	// set in the interrupt
-volatile boolean bNewThrottleSignalA = false;	// set in the interrupt and read in the loop
+volatile int nThrottleInA = NEUTRAL_THROTTLE_A; // volatile, we set this in the Interrupt and read it in loop so it must be declared volatile
+volatile unsigned long ulStartPeriodA = 0;  // set in the interrupt
+volatile boolean bNewThrottleSignalA = false; // set in the interrupt and read in the loop
 
 // Left-Right steering
-volatile int nThrottleInB = NEUTRAL_THROTTLE_B;	// volatile, we set this in the Interrupt and read it in loop so it must be declared volatile
-volatile unsigned long ulStartPeriodB = 0;	// set in the interrupt
-volatile boolean bNewThrottleSignalB = false;	// set in the interrupt and read in the loop
+volatile int nThrottleInB = NEUTRAL_THROTTLE_B; // volatile, we set this in the Interrupt and read it in loop so it must be declared volatile
+volatile unsigned long ulStartPeriodB = 0;  // set in the interrupt
+volatile boolean bNewThrottleSignalB = false; // set in the interrupt and read in the loop
 
 // Flags
 bool forward, backward, left, right; 
@@ -136,10 +135,7 @@ void loop () {
 
 void handleThrottle() {
     if (bNewThrottleSignalA) {
-        // Check that no values are out of valid range
-        throttlePercent = min(throttlePercent, 1.0);
-        throttlePercent = max(throttlePercent, 0.0);
-        if (nThrottleInA > NEUTRAL_THROTTLE_A-150 && nThrottleInA < NEUTRAL_THROTTLE_A+150) {
+        if (nThrottleInA > NEUTRAL_THROTTLE_A-50 && nThrottleInA < NEUTRAL_THROTTLE_A+50) {
             //NO FORWARD/BACKWARD
             throttlePercent = 0;
             forward = false;
@@ -147,15 +143,18 @@ void handleThrottle() {
         }
         else if (nThrottleInA < NEUTRAL_THROTTLE_A){
             // Going Forward
-            throttlePercent = (float)(NEUTRAL_THROTTLE_A-nThrottleInA)/(NEUTRAL_THROTTLE_A-maxForward);
+            throttlePercent = (float)(NEUTRAL_THROTTLE_A-nThrottleInA-50)/(NEUTRAL_THROTTLE_A-maxForward);
             forward = true; 
             backward = false;
         } else {
             // Going Backward
-            throttlePercent = (float)(NEUTRAL_THROTTLE_A-nThrottleInA)/(NEUTRAL_THROTTLE_A-maxBack);
+            throttlePercent = (float)(NEUTRAL_THROTTLE_A-nThrottleInA+50)/(NEUTRAL_THROTTLE_A-maxBack);
             backward = true;
             forward = false;
         }
+    // Check that no values are out of valid range
+    throttlePercent = min(throttlePercent, 1.0);
+    throttlePercent = max(throttlePercent, 0.0);
     bNewThrottleSignalA = false;
     }    
 }
@@ -172,12 +171,12 @@ void handleTurn() {
             right = false;
         } else if (nThrottleInB < NEUTRAL_THROTTLE_B) {
             // Going left 
-            steerPercent = (float)(NEUTRAL_THROTTLE_B-nThrottleInB)/(NEUTRAL_THROTTLE_B-maxLeft);
+            steerPercent = (float)(NEUTRAL_THROTTLE_B-nThrottleInB-100)/(NEUTRAL_THROTTLE_B-maxLeft);
             left = true;
             right = false;
         } else {
             //Going Right 
-            steerPercent =(float)(NEUTRAL_THROTTLE_B-nThrottleInB)/(NEUTRAL_THROTTLE_B-maxRight) ; 
+            steerPercent =(float)(NEUTRAL_THROTTLE_B-nThrottleInB+100)/(NEUTRAL_THROTTLE_B-maxRight) ; 
             right = true;
             left = false; 
             }
@@ -212,11 +211,20 @@ void updateSpeeds() {
         }
         // Right
         else if (right) {
-            setHBridge(HIGH, LOW, HIGH, LOW, 255*throttlePercent, 255*throttlePercent*(1-steerPercent));
+            if (throttlePercent < 45) {
+                setHBridge(HIGH, LOW, LOW, HIGH, 255*steerPercent, 255*steerPercent);
+            } else {
+                setHBridge(HIGH, LOW, HIGH, LOW, 255*throttlePercent, 255*throttlePercent*(1-steerPercent));
+            }
         } 
         // Left
         else if (left) {
-            setHBridge(HIGH, LOW, HIGH, LOW, 255*throttlePercent*(1-steerPercent), 255*throttlePercent);  
+            if (throttlePercent < 45) {
+                setHBridge(LOW, HIGH, HIGH, LOW,255*steerPercent, 255*steerPercent);  
+            } else {
+                setHBridge(HIGH, LOW, HIGH, LOW, 255*throttlePercent*(1-steerPercent), 255*throttlePercent);  
+
+            }
         }
     }
     // Move backward
@@ -228,11 +236,19 @@ void updateSpeeds() {
         }
         // Right
         else if (right) {
-            setHBridge(LOW, HIGH, LOW, HIGH, 255*throttlePercent, 255*throttlePercent*(1-steerPercent));
+            if (throttlePercent < 45) {
+                setHBridge(HIGH, LOW, LOW, HIGH,255*steerPercent, 255*steerPercent);  
+            } else {
+                setHBridge(LOW, HIGH, LOW, HIGH, 255*throttlePercent, 255*throttlePercent*(1-steerPercent));
+            }
         }
         // Left
         else if (left) {
-            setHBridge(LOW, HIGH, LOW, HIGH, 255*throttlePercent*(1-steerPercent), 255*throttlePercent);  
+            if (throttlePercent < 45) {
+                setHBridge(LOW, HIGH, HIGH, LOW,255*steerPercent, 255*steerPercent);  
+            } else {
+                setHBridge(LOW, HIGH, LOW, HIGH, 255*throttlePercent*(1-steerPercent), 255*throttlePercent);  
+            }
         }
     }
 }
